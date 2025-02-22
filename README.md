@@ -16,10 +16,10 @@ A platform for training and competing with AI agents in classic arcade games usi
 
 Our agents use Deep Q-Learning (DQN), a reinforcement learning algorithm that learns to play games by:
 
-- Observing game frames as input (what the agent "sees")
-- Learning which actions lead to higher rewards through trial and error
-- Using a neural network to approximate the optimal action-value function
-- Storing and learning from past experiences (replay buffer)
+- Observing game frames as input (what the agent "sees" to play the game).
+- Learning which actions lead to higher rewards through trial and error.
+- Using a neural network to approximate the optimal action-value function and make decisions based on the processed game state.
+- Storing and learning from past experiences (replay buffer) and improving through experience.
 
 ### Training Process
 
@@ -48,13 +48,15 @@ Our agents use Deep Q-Learning (DQN), a reinforcement learning algorithm that le
 ### Prerequisites
 
 Core Requirements:
+
 - **Python**: Version 3.8 - 3.12 (3.13 not yet supported)
 - **Operating System**: Linux, macOS, or WSL2 on Windows
 - **Storage**: At least 2GB free space
 - **Memory**: At least 4GB RAM recommended
 
 Optional Requirements (for staking):
-- **Node.js & npm**: Required for NEAR CLI (v14 or higher)
+
+- **Node.js & npm**: Required for NEAR CLI (v16 or higher)
 - **NEAR Account**: Required for staking and competitions
 - **GPU**: Optional for faster training
 
@@ -69,8 +71,24 @@ cd agent-arcade
 chmod +x ./install.sh
 ./install.sh
 
-# Optional: Install NEAR integration for staking
+# Optional: Install NEAR integration for staking (if not selected during installation)
 pip install -e ".[staking]"
+```
+
+The installation script will:
+
+- Set up a Python virtual environment
+- Install all required dependencies
+- Download and configure Atari ROMs
+- Install NEAR CLI (optional)
+- Create necessary directories
+- Verify the installation
+
+For GPU support, an additional script is available:
+
+```bash
+chmod +x ./gpu_install.sh
+./gpu_install.sh
 ```
 
 ### Installation Troubleshooting
@@ -84,7 +102,7 @@ If you encounter issues during installation:
    pip uninstall -y ale-py shimmy gymnasium
    
    # Install dependencies in correct order
-   pip install "ale-py==0.10.2"
+   pip install "ale-py==0.10.1"
    pip install "shimmy[atari]==0.2.1"
    pip install "gymnasium[atari]==0.28.1"
    ```
@@ -124,7 +142,7 @@ agent-arcade train pong           # Without visualization (faster)
 
 # Train Space Invaders agent
 agent-arcade train space-invaders --render
-agent-arcade train space-invaders --config configs/space_invaders_optimized_sb3_config.yaml
+agent-arcade train space-invaders --config models/space_invaders/config.yaml
 
 # Monitor training progress
 tensorboard --logdir ./tensorboard/DQN_[game]_[timestamp]
@@ -132,12 +150,14 @@ tensorboard --logdir ./tensorboard/DQN_[game]_[timestamp]
 
 ### Evaluating Agents
 
+> **Important**: Frame stacking varies by game (Pong: 4 frames, Space Invaders/River Raid: 16 frames). Ensure your model and environment configurations match.
+
 ```bash
 # Evaluate Pong agent
-agent-arcade evaluate pong --model models/pong_final.zip --episodes 10 --render
+agent-arcade evaluate pong models/pong/final_model.zip --episodes 10 --render
 
 # Evaluate Space Invaders agent
-agent-arcade evaluate space-invaders --model models/space_invaders_optimized/final_model.zip --episodes 5 --render --record
+agent-arcade evaluate space_invaders models/space_invaders/final_model.zip --episodes 5 --render
 
 # View evaluation metrics and competition recommendations
 agent-arcade stats [game] --model [model_path]
@@ -150,8 +170,8 @@ agent-arcade stats [game] --model [model_path]
 agent-arcade wallet-cmd status
 
 # Stake on agent performance
-agent-arcade stake place pong --model models/pong_final.zip --amount 10 --target-score 15
-agent-arcade stake place space-invaders --model models/space_invaders_optimized/final_model.zip --amount 5 --target-score 300
+agent-arcade stake place pong --model models/pong/final_model.zip --amount 10 --target-score 15
+agent-arcade stake place space-invaders --model models/space_invaders/final_model.zip --amount 5 --target-score 270
 
 # View competition leaderboard
 agent-arcade leaderboard top pong
@@ -166,15 +186,6 @@ agent-arcade leaderboard player pong
 agent-arcade leaderboard stats
 ```
 
-## 🛠 Implementation Details
-
-### DQN Architecture
-
-- Custom CNN feature extractor (3 convolutional layers)
-- Dual 512-unit fully connected layers
-- Frame stacking (4 frames) for temporal information
-- Optimized for Apple Silicon (MPS) and CPU performance
-
 ### Training Parameters
 
 ```yaml
@@ -185,7 +196,7 @@ learning_starts: 50000
 batch_size: 256
 exploration_fraction: 0.2
 target_update_interval: 2000
-frame_stack: 4
+frame_stack: 16
 ```
 
 ### Performance Optimizations
@@ -214,72 +225,60 @@ frame_stack: 4
 
 ## 🔄 Development Workflow
 
-1. Train baseline model (15 min to 4 hours on M1/M2 Macs depending on the game and the number of training steps)
+Training locally? See the [Training Guide](docs/training-guide.md) for more details.
+
+1. Train baseline model:
+   - Pong: ~2 hours on M-series Mac
+   - Space Invaders: ~6 hours on M-series Mac
+   - River Raid: Custom reward shaping, training time varies
 2. Evaluate and record performance
 3. Iterate on hyperparameters if needed
 4. Save best model for competition baseline
 
+Each game directory contains:
+
+- `config.yaml`: Game-specific training configuration
+- `checkpoints/`: Saved model checkpoints during training
+- `final_model.zip`: Best performing model
+
 ## 💎 NEAR Integration (Optional)
 
-The NEAR integration allows you to stake tokens on your agent's performance and compete for rewards. This is an optional feature that requires:
+The NEAR integration allows you to stake tokens on your agent's performance and compete for rewards. Our staking contract is written in Rust and is already deployed on testnet. To keep the repository lightweight, compiled artifacts (including the generated WASM) are ignored from version control.
 
-1. **Prerequisites**:
-   - Node.js >= 14.0.0 and npm
-   - NEAR account (create at https://wallet.near.org/)
-   - NEAR CLI (installed via npm)
+### Building the Staking Contract Locally
 
-2. **Installation**:
-```bash
-# Install NEAR CLI
-npm install -g near-cli
+If you want to build the contract locally (for testing or to deploy your own version), follow these steps:
 
-# Install Agent Arcade with staking support
-pip install -e ".[staking]"
-```
+1. **Navigate to the Contract Directory:**
 
-3. **Login**:
-```bash
-# Simple login (opens web browser)
-agent-arcade wallet-cmd login
+   ```bash
+   cd contract
+   ```
 
-# Specify network and account
-agent-arcade wallet-cmd login --network testnet --account-id your-account.testnet
-```
+2. **Build the Contract for the WASM Target:**
 
-### Technical Implementation
+   ```bash
+   cargo build --target wasm32-unknown-unknown --release
+   ```
 
-Agent Arcade uses:
-- NEAR CLI for wallet operations
-- Direct JSON RPC API calls for contract interactions
-- Secure key management via system keychain
-- Asynchronous contract calls for better performance
+   This will compile the contract, and the output (e.g., a `.wasm` file) will be generated under the `target/` directory.
 
-### Staking System
+3. **Note:**  
+   The contract's compiled artifacts (including the WASM file) are not tracked in the repository to keep our codebase lightweight. We recommend rebuilding the contract locally as needed.
 
-- Stake NEAR on your agent's performance
-- Tiered reward structure based on achieved scores:
-  - Score ≥ 15: 3x stake
-  - Score ≥ 10: 2x stake
-  - Score ≥ 5: 1.5x stake
-  - Score < 5: Stake goes to pool
+### Using the Deployed Contract
 
-### Example Usage
+Since our staking contract is already deployed on NEAR testnet, you can use the provided NEAR CLI commands to interact with it:
 
 ```bash
-# Check your balance
+# Check your wallet status
 agent-arcade wallet-cmd status
 
-# Place a stake
-agent-arcade stake place pong --model models/pong_final.zip --amount 10 --target-score 15
-
-# View leaderboard
-agent-arcade leaderboard top pong
-
-# View your stats
-agent-arcade leaderboard player pong
+# Place a stake on your agent
+agent-arcade stake place pong --model models/pong/final_model.zip --amount 10 --target-score 15
 ```
 
-For detailed documentation, see [NEAR Integration Guide](docs/near-integration.md).
+See the [Competition Guide](docs/competition-guide.md) for more details.
 
 ## 🤝 Contributing
 
@@ -292,12 +291,3 @@ For detailed documentation, see [NEAR Integration Guide](docs/near-integration.m
 ## 📄 License
 
 [MIT LICENSE](LICENSE)
-
-# Login to NEAR Wallet
-agent-arcade wallet-cmd login
-
-# Check your wallet status
-agent-arcade wallet-cmd status
-
-# Logout from wallet
-agent-arcade wallet-cmd logout
