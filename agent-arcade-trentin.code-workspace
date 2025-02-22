@@ -9,6 +9,12 @@
 		"sync-rsync.onSave": true,
 		"sync-rsync.onSaveIndividual": true,
 		"sync-rsync.remote": "ubuntu@150.230.42.186:/home/ubuntu/AgentArcade",
-		"sync-rsync.shell": "ssh"
+		"sync-rsync.shell": "ssh",
+		"sync-rsync.sites": [
+			{
+				"localPath": ".",
+				"remotePath": "ubuntu@150.230.42.186:/home/ubuntu/AgentArcade",
+			}
+		]
 	}
 }
