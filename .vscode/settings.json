@@ -11,5 +11,5 @@
     "sync-rsync.onSaveIndividual": true,
     "sync-rsync.remote": "ubuntu@150.230.42.186",
     "sync-rsync.shell": "ssh",
-    "sync-rsync.executableShell": "/bin/bash"
+    "sync-rsync.executableShell": ""
 }
