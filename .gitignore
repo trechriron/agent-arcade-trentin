@@ -36,9 +36,10 @@ wandb/
 logs/
 agent_arcade.egg-info/
 .DS_Store
-<<<<<<< Updated upstream
 .coverage
 .cursor
+.python-version
+build/
 
 # --------------------------
 # Rust and Cargo artifacts
@@ -53,8 +54,9 @@ neardev/
 
 # Optionally ignore Node modules (if using Node.js for frontend or tooling)
 node_modules/
-=======
 near.md
-.python-version
+
+# IDE dir and files.
 .code-workspace
->>>>>>> Stashed changes
+.vscode/
+.idea/
