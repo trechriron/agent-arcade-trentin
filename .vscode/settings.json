@@ -1,15 +1,14 @@
 {
     "sync-rsync.exclude": [
         ".git",
-        ".vscode",
-        ".code-workspace"
+        "*.code-workspace"
     ],
     "sync-rsync.autoShowOutput": true,
     "sync-rsync.notification": true,
     "sync-rsync.onLoadIndividual": true,
     "sync-rsync.onSave": true,
     "sync-rsync.onSaveIndividual": true,
-    "sync-rsync.remote": "ubuntu@150.230.42.186",
+    "sync-rsync.remote": "ubuntu@150.230.42.186:/home/ubuntu/AgentArcade/",
     "sync-rsync.shell": "ssh",
     "sync-rsync.executableShell": ""
 }
